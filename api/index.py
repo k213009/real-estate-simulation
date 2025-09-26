@@ -9,11 +9,17 @@ CORS(app)
 
 # --- サーバー起動時に一度だけCSVを読み込む ---
 try:
-    land_data_df = pd.read_csv("land_data_okinawa.csv")
+    # Vercelの実行環境を考慮し、apiフォルダ内のCSVを読み込む
+    land_data_df = pd.read_csv("api/land_data_okinawa.csv")
     print("沖縄県の地価データを正常に読み込みました。")
 except FileNotFoundError:
-    print("エラー: land_data_okinawa.csv が見つかりません。")
-    land_data_df = None
+    # ローカル開発用に、同じ階層のCSVも試す
+    try:
+        land_data_df = pd.read_csv("land_data_okinawa.csv")
+        print("沖縄県の地価データを正常に読み込みました。(local)")
+    except FileNotFoundError:
+        print("エラー: land_data_okinawa.csv が見つかりません。")
+        land_data_df = None
 
 # --- 定数設定 ---
 STRUCTURE_DATA = {
@@ -121,7 +127,7 @@ def find_a_rank_loan(data, noi_year1, collateral_value):
 
     initial_loan_payment = (
         -1 * npf.pmt(interest_rate / 100 / 12, loan_term * 12, loan_amount) * 12
-        if loan_amount > 0 and loan_term > 0 and interest_rate > 0
+        if all(v > 0 for v in [loan_amount, loan_term, interest_rate])
         else 0
     )
     initial_dscr = (
@@ -152,7 +158,7 @@ def find_a_rank_loan(data, noi_year1, collateral_value):
     return 0
 
 
-@app.route("/simulate", methods=["POST"])
+@app.route("/api/simulate", methods=["POST"])
 def simulate():
     try:
         data = {k: v or 0 for k, v in request.json.items()}
@@ -183,11 +189,7 @@ def simulate():
 
         # --- 2. 初年度のシミュレーション ---
         yearly_loan_payment = 0
-        if (
-            data.get("loanAmount", 0) > 0
-            and data.get("loanTerm", 0) > 0
-            and data.get("interestRate", 0) > 0
-        ):
+        if data.get("loanAmount", 0) > 0 and data.get("loanTerm", 0) > 0:
             yearly_loan_payment = (
                 -1
                 * npf.pmt(

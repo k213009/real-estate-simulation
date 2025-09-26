@@ -152,7 +152,7 @@ function InputForm() {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/simulate", {
+      const response = await fetch("/api/simulate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -179,7 +179,7 @@ function InputForm() {
 
       <AppDescription>
         <p>
-          <strong>沖縄の不動産投資、この一手で差をつける。</strong>
+          <strong>沖縄の不動産投資判断を、誰でも簡単に、プロの視点で。</strong>
         </p>
         <p>
           本シミュレーターは、沖縄の市場に特化した投資分析ツールです。物件情報を入力するだけで、銀行評価額や長期的な収支を瞬時に可視化し、専門家でなくても精度の高い投資判断をサポートします。
