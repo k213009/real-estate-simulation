@@ -3,23 +3,24 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pandas as pd
 import difflib
+import os
 
 app = Flask(__name__)
 CORS(app)
 
-# --- サーバー起動時に一度だけCSVを読み込む ---
+# --- サーバー起動時に一度だけCSVを読み込む (より確実な方法に修正) ---
 try:
-    # Vercelの実行環境を考慮し、apiフォルダ内のCSVを読み込む
-    land_data_df = pd.read_csv("api/land_data_okinawa.csv")
+    # 現在のファイル(index.py)の場所を基準に、CSVファイルへの絶対パスを生成
+    _dir = os.path.dirname(__file__)
+    csv_path = os.path.join(_dir, "land_data_okinawa.csv")
+    land_data_df = pd.read_csv(csv_path)
     print("沖縄県の地価データを正常に読み込みました。")
 except FileNotFoundError:
-    # ローカル開発用に、同じ階層のCSVも試す
-    try:
-        land_data_df = pd.read_csv("land_data_okinawa.csv")
-        print("沖縄県の地価データを正常に読み込みました。(local)")
-    except FileNotFoundError:
-        print("エラー: land_data_okinawa.csv が見つかりません。")
-        land_data_df = None
+    print(f"エラー: {csv_path} が見つかりません。")
+    land_data_df = None
+except Exception as e:
+    print(f"CSV読み込み中に予期せぬエラーが発生しました: {e}")
+    land_data_df = None
 
 # --- 定数設定 ---
 STRUCTURE_DATA = {
@@ -34,7 +35,7 @@ LAND_CAP_RATES = {"Naha": 0.032, "Chunanbu": 0.034, "Hokubu": 0.035}
 BUILDING_CAP_RATE = 0.055
 
 
-# --- 住所から最も近い基準地の価格を探す関数 ---
+# (これ以降の関数は変更ありません)
 def find_closest_land_price(user_address):
     if land_data_df is None or land_data_df.empty or not user_address:
         return 0, "地価データなし"
@@ -54,7 +55,6 @@ def find_closest_land_price(user_address):
     return price_per_sqm, source_text
 
 
-# --- スコアリング関数 ---
 def get_score(dscr, ltv):
     if dscr >= 1.4:
         dscr_cat = 0
@@ -97,7 +97,6 @@ def get_score(dscr, ltv):
     return score_matrix[dscr_cat][ltv_cat]
 
 
-# --- 銀行評価額の計算関数 ---
 def calculate_bank_metrics(noi, land_eval_cost, building_value, region):
     cost_approach_value = land_eval_cost + building_value
     property_value_for_noi = (
@@ -119,7 +118,6 @@ def calculate_bank_metrics(noi, land_eval_cost, building_value, region):
     )
 
 
-# --- Aランクになる借入額を逆算する関数 ---
 def find_a_rank_loan(data, noi_year1, collateral_value):
     loan_amount = data.get("loanAmount", 0)
     interest_rate = data.get("interestRate", 0)
@@ -163,7 +161,6 @@ def simulate():
     try:
         data = {k: v or 0 for k, v in request.json.items()}
 
-        # --- 1. 初期設定と自動計算 ---
         price_per_sqm, land_price_source = find_closest_land_price(
             data.get("address", "")
         )
@@ -187,18 +184,19 @@ def simulate():
             + automated_other_costs
         )
 
-        # --- 2. 初年度のシミュレーション ---
-        yearly_loan_payment = 0
-        if data.get("loanAmount", 0) > 0 and data.get("loanTerm", 0) > 0:
-            yearly_loan_payment = (
-                -1
-                * npf.pmt(
-                    data.get("interestRate", 0) / 100 / 12,
-                    data.get("loanTerm", 0) * 12,
-                    data.get("loanAmount", 0),
-                )
-                * 12
+        yearly_loan_payment = (
+            -1
+            * npf.pmt(
+                data.get("interestRate", 0) / 100 / 12,
+                data.get("loanTerm", 0) * 12,
+                data.get("loanAmount", 0),
             )
+            * 12
+            if all(
+                data.get(k, 0) > 0 for k in ["loanAmount", "loanTerm", "interestRate"]
+            )
+            else 0
+        )
 
         structure_info = STRUCTURE_DATA.get(
             data.get("structure", "Wood"), STRUCTURE_DATA["Wood"]
@@ -231,7 +229,6 @@ def simulate():
         noi_year1 = data.get("rent", 0) - year1_expenses["total"]
         cash_flow_y1 = noi_year1 - yearly_loan_payment
 
-        # --- 3. 銀行評価額と主要指標の計算 ---
         (
             collateral_value,
             cost_approach_value,
@@ -256,11 +253,9 @@ def simulate():
             "A" if score >= 80 else "B" if score >= 60 else "D" if score < 40 else "C"
         )
 
-        # --- 4. Aランク借入額と自己資金の計算 ---
         estimated_loan_amount = find_a_rank_loan(data, noi_year1, collateral_value)
         required_equity = property_total_cost - estimated_loan_amount
 
-        # --- 5. 35年間の長期シミュレーション ---
         long_term_projection, cumulative_cash_flow = [], 0
         current_rent, current_loan_balance = data.get("rent", 0), data.get(
             "loanAmount", 0
@@ -311,7 +306,6 @@ def simulate():
             if total_age > 10 and year % 5 == 0:
                 current_rent *= 1 - 0.01
 
-        # --- 6. 最終的な指標を計算 ---
         surface_yield = (
             (data.get("rent", 0) / property_total_cost) * 100
             if property_total_cost > 0
@@ -339,7 +333,6 @@ def simulate():
         )
         unsecured_amount = max(0, data.get("loanAmount", 0) - collateral_value)
 
-        # --- 7. Reactへの応答データを作成 ---
         response_data = {
             "market_price": round(property_total_cost, 0),
             "cost_approach_value": round(cost_approach_value, 0),

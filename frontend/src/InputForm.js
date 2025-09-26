@@ -152,11 +152,14 @@ function InputForm() {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/simulate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      const response = await fetch(
+        "https://real-estate-simulation.vercel.app/api/simulate",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        }
+      );
       if (!response.ok) {
         const errorResult = await response.json();
         throw new Error(
