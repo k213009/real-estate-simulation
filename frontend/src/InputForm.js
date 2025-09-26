@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
-// フォーム全体のコンテナ
+// (styled-componentsの定義は変更なし)
 const FormContainer = styled.div`
   max-width: 900px;
   margin: 40px auto;
@@ -12,21 +12,53 @@ const FormContainer = styled.div`
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   background-color: #f9f9f9;
 `;
-
-// 入力グループ
+const Section = styled.div`
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+`;
 const InputGroup = styled.div`
   margin-bottom: 24px;
 `;
-
-// ラベル
 const Label = styled.label`
   display: block;
   margin-bottom: 8px;
   font-weight: bold;
   color: #333;
 `;
-
-// ボタン
+const Input = styled.input`
+  width: 100%;
+  padding: 10px;
+  border: 1px solid ${(props) => (props.hasError ? "#d32f2f" : "#ddd")};
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
+  &:focus {
+    outline: none;
+    border-color: ${(props) => (props.hasError ? "#d32f2f" : "#007bff")};
+    box-shadow: 0 0 0 2px
+      ${(props) =>
+        props.hasError ? "rgba(211, 47, 47, 0.2)" : "rgba(0, 123, 255, 0.2)"};
+  }
+`;
+const Select = styled.select`
+  width: 100%;
+  padding: 10px;
+  border: 1px solid ${(props) => (props.hasError ? "#d32f2f" : "#ddd")};
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
+  background-color: white;
+  &:focus {
+    outline: none;
+    border-color: ${(props) => (props.hasError ? "#d32f2f" : "#007bff")};
+    box-shadow: 0 0 0 2px
+      ${(props) =>
+        props.hasError ? "rgba(211, 47, 47, 0.2)" : "rgba(0, 123, 255, 0.2)"};
+  }
+`;
 const Button = styled.button`
   width: 100%;
   padding: 12px;
@@ -45,16 +77,13 @@ const Button = styled.button`
     cursor: not-allowed;
   }
 `;
-
-// グループ化するためのコンテナ
-const Section = styled.div`
-  margin-bottom: 30px;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+const DemoButton = styled(Button)`
+  background-color: #28a745;
+  &:hover {
+    background-color: #218838;
+  }
+  margin-top: 15px;
 `;
-
 const SectionTitle = styled.h3`
   margin-top: 0;
   margin-bottom: 20px;
@@ -62,55 +91,63 @@ const SectionTitle = styled.h3`
   padding-bottom: 10px;
   color: #007bff;
 `;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 10px;
-  border: 1px solid ${(props) => (props.hasError ? "#d32f2f" : "#ddd")};
-  border-radius: 4px;
-  box-sizing: border-box;
-  font-size: 16px;
-  &:focus {
-    outline: none;
-    border-color: ${(props) => (props.hasError ? "#d32f2f" : "#007bff")};
-    box-shadow: 0 0 0 2px
-      ${(props) =>
-        props.hasError ? "rgba(211, 47, 47, 0.2)" : "rgba(0, 123, 255, 0.2)"};
-  }
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 10px;
-  border: 1px solid ${(props) => (props.hasError ? "#d32f2f" : "#ddd")};
-  border-radius: 4px;
-  box-sizing: border-box;
-  font-size: 16px;
-  background-color: white;
-  &:focus {
-    outline: none;
-    border-color: ${(props) => (props.hasError ? "#d32f2f" : "#007bff")};
-    box-shadow: 0 0 0 2px
-      ${(props) =>
-        props.hasError ? "rgba(211, 47, 47, 0.2)" : "rgba(0, 123, 255, 0.2)"};
-  }
-`;
-
 const ErrorMessage = styled.span`
   color: #d32f2f;
   font-size: 14px;
   display: block;
   margin-top: 5px;
 `;
+const AppDescription = styled(Section)`
+  background-color: #e7f3ff;
+  border-left: 5px solid #007bff;
+  p {
+    margin-bottom: 10px;
+    line-height: 1.6;
+  }
+`;
+const Footer = styled.footer`
+  margin-top: 40px;
+  text-align: left;
+  font-size: 14px;
+  color: #666;
+  p {
+    margin-bottom: 10px;
+  }
+  a {
+    color: #007bff;
+  }
+`;
 
 function InputForm() {
+  // --- ▼▼▼ ここを修正: defaultValuesを削除 ---
   const {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm();
+
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  const handleDemoData = () => {
+    reset({
+      address: "沖縄市泡瀬4丁目",
+      rent: 2304,
+      rooms: 24,
+      buildingCost: 25650,
+      landCost: 8000,
+      loanAmount: 30000,
+      loanTerm: 35,
+      interestRate: 2.3,
+      structure: "RC",
+      buildingAge: 0,
+      buildingArea: 1080,
+      landArea: 600,
+      hasElevator: "yes",
+      region: "Chunanbu",
+    });
+  };
 
   const onSubmit = async (data) => {
     setIsLoading(true);
@@ -120,12 +157,14 @@ function InputForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      const result = await response.json();
-      if (response.ok) {
-        navigate("/results", { state: { result: result } });
-      } else {
-        throw new Error(result.error || "計算サーバーでエラーが発生しました。");
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw new Error(
+          errorResult.error || `HTTP error! status: ${response.status}`
+        );
       }
+      const result = await response.json();
+      navigate("/results", { state: { result: result } });
     } catch (error) {
       console.error("サーバーとの通信でエラーが発生しました:", error);
       alert(`エラーが発生しました: ${error.message}`);
@@ -137,11 +176,36 @@ function InputForm() {
   return (
     <FormContainer>
       <h1>うちなー収益物件シミュレーター</h1>
+
+      <AppDescription>
+        <p>
+          <strong>沖縄の不動産投資、この一手で差をつける。</strong>
+        </p>
+        <p>
+          本シミュレーターは、沖縄の市場に特化した投資分析ツールです。物件情報を入力するだけで、銀行評価額や長期的な収支を瞬時に可視化し、専門家でなくても精度の高い投資判断をサポートします。
+        </p>
+        <p>
+          <strong>開発経緯：</strong>
+          元銀行員の開発者が、お客様から頂いた「気になる物件があるけど、本当に投資して大丈夫？」「いくらまでなら銀行は貸してくれる？」というリアルな声に応えるために制作しました。誰でも無料でご利用いただけます。
+        </p>
+      </AppDescription>
+
       <form onSubmit={handleSubmit(onSubmit)}>
+        {/* (フォームの各セクションは変更なし) */}
         <Section>
           <SectionTitle>物件情報</SectionTitle>
           <InputGroup>
-            <Label htmlFor="address">場所（沖縄県〇〇市〇〇）</Label>
+            <Label htmlFor="address">場所（例：那覇市おもろまち4丁目）</Label>
+            <p
+              style={{
+                fontSize: "12px",
+                color: "#666",
+                marginTop: "-10px",
+                marginBottom: "10px",
+              }}
+            >
+              ※土地の「評価額」算出に利用します
+            </p>
             <Input
               id="address"
               hasError={!!errors.address}
@@ -156,6 +220,7 @@ function InputForm() {
             <Input
               id="rent"
               type="number"
+              step="0.01"
               hasError={!!errors.rent}
               {...register("rent", {
                 required: "年間家賃収入は必須です",
@@ -190,6 +255,7 @@ function InputForm() {
             <Input
               id="buildingCost"
               type="number"
+              step="0.01"
               hasError={!!errors.buildingCost}
               {...register("buildingCost", {
                 required: "建築費/購入額は必須です",
@@ -206,6 +272,7 @@ function InputForm() {
             <Input
               id="landCost"
               type="number"
+              step="0.01"
               hasError={!!errors.landCost}
               {...register("landCost", {
                 required: "土地代は必須です",
@@ -217,22 +284,6 @@ function InputForm() {
               <ErrorMessage>{errors.landCost.message}</ErrorMessage>
             )}
           </InputGroup>
-          <InputGroup>
-            <Label htmlFor="otherCosts">その他費用（万円）</Label>
-            <Input
-              id="otherCosts"
-              type="number"
-              hasError={!!errors.otherCosts}
-              {...register("otherCosts", {
-                required: "その他費用は必須です",
-                valueAsNumber: true,
-                min: { value: 0, message: "0以上の値を入力してください" },
-              })}
-            />
-            {errors.otherCosts && (
-              <ErrorMessage>{errors.otherCosts.message}</ErrorMessage>
-            )}
-          </InputGroup>
         </Section>
 
         <Section>
@@ -242,6 +293,7 @@ function InputForm() {
             <Input
               id="loanAmount"
               type="number"
+              step="0.01"
               hasError={!!errors.loanAmount}
               {...register("loanAmount", {
                 required: "借入金額は必須です",
@@ -275,7 +327,7 @@ function InputForm() {
             <Input
               id="interestRate"
               type="number"
-              step="0.01"
+              step="0.001"
               hasError={!!errors.interestRate}
               {...register("interestRate", {
                 required: "金利は必須です",
@@ -309,6 +361,22 @@ function InputForm() {
             )}
           </InputGroup>
           <InputGroup>
+            <Label htmlFor="region">地域</Label>
+            <Select
+              id="region"
+              hasError={!!errors.region}
+              {...register("region", { required: "地域を選択してください" })}
+            >
+              <option value="">選択してください</option>
+              <option value="Naha">那覇</option>
+              <option value="Chunanbu">中南部</option>
+              <option value="Hokubu">北部</option>
+            </Select>
+            {errors.region && (
+              <ErrorMessage>{errors.region.message}</ErrorMessage>
+            )}
+          </InputGroup>
+          <InputGroup>
             <Label htmlFor="buildingAge">築年数（新築は0）</Label>
             <Input
               id="buildingAge"
@@ -329,6 +397,7 @@ function InputForm() {
             <Input
               id="buildingArea"
               type="number"
+              step="0.01"
               hasError={!!errors.buildingArea}
               {...register("buildingArea", {
                 required: "建物面積は必須です",
@@ -338,6 +407,33 @@ function InputForm() {
             />
             {errors.buildingArea && (
               <ErrorMessage>{errors.buildingArea.message}</ErrorMessage>
+            )}
+          </InputGroup>
+          <InputGroup>
+            <Label htmlFor="landArea">土地面積（㎡）</Label>
+            <p
+              style={{
+                fontSize: "12px",
+                color: "#666",
+                marginTop: "-10px",
+                marginBottom: "10px",
+              }}
+            >
+              ※土地の「評価額」算出に利用します
+            </p>
+            <Input
+              id="landArea"
+              type="number"
+              step="0.01"
+              hasError={!!errors.landArea}
+              {...register("landArea", {
+                required: "土地面積は必須です",
+                valueAsNumber: true,
+                min: { value: 0, message: "0以上の値を入力してください" },
+              })}
+            />
+            {errors.landArea && (
+              <ErrorMessage>{errors.landArea.message}</ErrorMessage>
             )}
           </InputGroup>
           <InputGroup>
@@ -369,7 +465,25 @@ function InputForm() {
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "計算中..." : "シミュレーション実行"}
         </Button>
+        <DemoButton type="button" onClick={handleDemoData}>
+          デモ用データを自動入力
+        </DemoButton>
       </form>
+
+      <Footer>
+        <p>
+          免責事項：本シミュレーションはあくまで概算値であり、実際の投資結果を保証するものではありません。投資の最終判断はご自身の責任において行ってください。
+        </p>
+        <p style={{ textAlign: "center" }}>
+          <a
+            href="https://github.com/k213009/uchina-real-estate-sim"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHubリポジトリ
+          </a>
+        </p>
+      </Footer>
     </FormContainer>
   );
 }
