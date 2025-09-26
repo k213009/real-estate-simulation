@@ -152,16 +152,9 @@ function InputForm() {
   // --- ▼▼▼ ここからが修正箇所 ▼▼▼ ---
   const onSubmit = async (data) => {
     setIsLoading(true);
-
-    // Vercelの本番環境URLを自動で設定
-    const apiUrl =
-      process.env.NODE_ENV === "production"
-        ? "https://real-estate-simulation-six.vercel.app/api/simulate"
-        : "/api/simulate";
-
     try {
-      // axios を使ったPOSTリクエスト
-      const response = await axios.post(apiUrl, data, {
+      // APIのURLを相対パスに変更し、axiosで通信
+      const response = await axios.post("/api/simulate", data, {
         headers: {
           "Content-Type": "application/json",
         },
@@ -169,8 +162,10 @@ function InputForm() {
       navigate("/results", { state: { result: response.data } });
     } catch (error) {
       console.error("サーバーとの通信でエラーが発生しました:", error);
+      // エラーメッセージを分かりやすく表示
       const errorMessage = error.response
-        ? error.response.data.error
+        ? error.response.data.error ||
+          `サーバーエラー: ${error.response.status}`
         : error.message;
       alert(`エラーが発生しました: ${errorMessage}`);
     } finally {
@@ -252,6 +247,7 @@ function InputForm() {
             )}
           </InputGroup>
         </Section>
+
         <Section>
           <SectionTitle>費用・価格情報</SectionTitle>
           <InputGroup>
@@ -289,6 +285,7 @@ function InputForm() {
             )}
           </InputGroup>
         </Section>
+
         <Section>
           <SectionTitle>借入情報</SectionTitle>
           <InputGroup>
@@ -343,6 +340,7 @@ function InputForm() {
             )}
           </InputGroup>
         </Section>
+
         <Section>
           <SectionTitle>物件詳細</SectionTitle>
           <InputGroup>
@@ -463,6 +461,7 @@ function InputForm() {
             )}
           </InputGroup>
         </Section>
+
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "計算中..." : "シミュレーション実行"}
         </Button>
@@ -470,6 +469,7 @@ function InputForm() {
           デモ用データを自動入力
         </DemoButton>
       </form>
+
       <Footer>
         <p>
           免責事項：本シミュレーションはあくまで概算値であり、実際の投資結果を保証するものではありません。投資の最終判断はご自身の責任において行ってください。
