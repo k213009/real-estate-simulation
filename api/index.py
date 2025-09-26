@@ -6,7 +6,7 @@ import difflib
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # --- サーバー起動時に一度だけCSVを読み込む ---
 try:
